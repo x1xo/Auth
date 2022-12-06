@@ -12,6 +12,8 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 app.use(express.static('public'))
 
+
+app.get('/', (req, res) => res.send({message: "Xixo Auth Server v1.0"}))
 app.get('/keys', (req, res) => { res.send(require('./certs/keys.json')) })
 
 app.get('/login', (req, res) => {
@@ -35,16 +37,16 @@ app.use('/callback/google', require('./routes/callback/google'))
 
 app.listen(process.env.PORT || 3000, async () => { 
   console.log(`🚀 @ http://localhost:${process.env.PORT || 3000}`)
+  if(!fs.existsSync('./certs')) fs.mkdirSync('./certs');
   if(!fs.existsSync('./certs/private.pem') || !fs.existsSync('./certs/public.pem')){
     const cert = await Certs.findOne({});
-    if(!fs.existsSync('./certs')) fs.mkdirSync('./certs');
     fs.writeFileSync('./certs/private.pem', cert.private);
     fs.writeFileSync('./certs/public.pem', cert.public)
     app.set('secret', cert.private);
   } else {
     app.set('secret', fs.readFileSync('./certs/private.pem').toString());
   }
-
+  if(!fs.existsSync('./certs/keys.json')) fs.writeFileSync('./certs/keys.json', JSON.stringify({}))
   const Keys = require('./certs/keys.json')
   Keys.keys=[]
   const Rasha = require('rasha')
