@@ -19,7 +19,7 @@ app.get('/keys', (req, res) => { res.send(require('./certs/keys.json')) })
 app.get('/login', (req, res) => {
   let oAuthLinks = {
     "github": `https://github.com/login/oauth/authorize?client_id=${process.env.GITHUB_CLIENT_ID}&scope=user%20user:email%20repo%20repo_deployment`,
-    "discord": `https://discord.com/oauth2/authorize?response_type=code&client_id=${process.env.DISCORD_CLIENT_ID}&scope=identify%20guilds.join%20email&prompt=consent&redirect_uri=${process.env.NODE_ENV==='production' ? process.env.GLOBAL_URL : process.env.LOCAL_URL}`,
+    "discord": `https://discord.com/oauth2/authorize?response_type=code&client_id=${process.env.DISCORD_CLIENT_ID}&scope=identify%20guilds.join%20email&prompt=consent&redirect_uri=${process.env.NODE_ENV==='production' ? process.env.GLOBAL_URL : process.env.LOCAL_URL}/callback/discord`,
     "google": `https://accounts.google.com/o/oauth2/v2/auth?redirect_uri=${process.env.NODE_ENV === 'production' ? process.env.GLOBAL_URL : process.env.LOCAL_URL}/callback/google&prompt=consent&response_type=code&client_id=${process.env.GOOGLE_CLIENT_ID}&scope=profile+email&access_type=offline` }
 
   if(!req.query.type || !oAuthLinks[req.query.type]) 
