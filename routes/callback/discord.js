@@ -15,10 +15,10 @@ Router.get('/', async (req, res) => {
             code: req.query.code,
             redirect_uri: `${process.env.NODE_ENV === 'production' ? process.env.GLOBAL_URL : process.env.LOCAL_URL}/callback/discord`,
         }, { headers: { 'Content-Type': 'application/x-www-form-urlencoded', 'Accept-Encoding': 'identity'}})
-        console.log('discord token data:', dres)
+        //console.log('discord token data:', dres)
         //ures -> discords user response
         let {data: ures} = await axios.get('https://discord.com/api/users/@me', { headers: { Authorization: `Bearer ${dres.access_token}`, 'Accept-Encoding': 'identity' }})
-        console.log('discord user data:', ures)
+        //console.log('discord user data:', ures)
         let { email } = ures
 
         if(!ures.verified) return res.send({ error: true, code: 401, message: "UNVERIFIED_DISCORD_EMAIL" })

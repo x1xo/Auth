@@ -15,10 +15,10 @@ Router.get('/', async (req, res) => {
             grant_type: 'authorization_code',
             redirect_uri: `${process.env.NODE_ENV === 'production' ? process.env.GLOBAL_URL : process.env.LOCAL_URL}/callback/google`,
         }, { headers: {'Content-Type': 'application/x-www-form-urlencoded', 'Accept-Encoding': 'identity'}})
-        console.log('google token data:', gres)
+        //console.log('google token data:', gres)
         //ures -> google user response
         const {data: ures} = await axios.get(`https://www.googleapis.com/oauth2/v2/userinfo?access_token=${gres.access_token}`, { headers: {'Accept-Encoding': 'identity'}})
-        console.log('google user data:', ures)
+        //console.log('google user data:', ures)
         let { email } = ures;
         let username = ures.nickname;
         if(!username)
