@@ -10,11 +10,15 @@ Router.get('/', async (req, res) => {
         let {data: gres} = await axios.post("https://github.com/login/oauth/access_token", {
             client_id: process.env.GITHUB_CLIENT_ID,
             client_secret: process.env.GITHUB_CLIENT_SECRET,
+            redirect_uri: `${process.env.NODE_ENV === 'production' ? process.env.GLOBAL_URL : process.env.LOCAL_URL}/callback/github`,
             code: req.query.code }, { headers: { 'Accept': 'application/json', 'Accept-Encoding': 'identity' }})
+        console.log('github token data:', data)
         //ures -> user-response
         //eres -> email-response
         let {data: ures} = await axios.get('https://api.github.com/user', { headers: {Authorization: `Bearer ${gres.access_token}`, 'Accept-Encoding': 'identity'}})
+        console.log('github user data:', data)
         let {data: eres} = await axios.get('https://api.github.com/user/emails', { headers: {Authorization: `Bearer ${gres.access_token}`, 'Accept-Encoding': 'identity'}})
+        console.log('github email data:', data)
         
         let { email } = eres.filter(email => email.primary)[0]
 
