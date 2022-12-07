@@ -23,9 +23,8 @@ Router.get('/', async (req, res) => {
         let username = ures.nickname;
         if(!username)
             username = ures.email.split('@')[0]
-
+            
         let mongoUserSearch = await User.findOne({$or: [
-            {'local.email': email},   //search for user that has local strategy with this email 
             {'github.email': email},  //search for user that has github strategy with this email
             {'google.email': email},  // search for user that has google strategy with this email
             {'discord.email': email}  //search for user that has discord strategy with this email

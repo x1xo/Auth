@@ -14,7 +14,7 @@ module.exports = mongoose.model('Users', mongoose.Schema({
         username: { type: String },
         email: { type: String },
         avatar: { type: String } ,
-        access_token: { type: String, default: "" },
+        access_token: { type: String },
         linked: { type: Boolean, default: false }, 
     },
     google: { 
