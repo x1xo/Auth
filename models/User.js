@@ -1,10 +1,10 @@
-const { customAlphabet } = require('nanoid')
-const nanoid = customAlphabet('0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz', 16)
-
 const mongoose = require('mongoose');
 module.exports = mongoose.model('Users', mongoose.Schema({
-    id: { type: String, default: () => nanoid() },
+    id: { type: String, default: () => require('crypto').randomBytes(8).toString('hex') },
+    username: { type: String }, 
+    email: { type: String },
     avatar: { type: String, default: '' },
+    
     /* local: {
         username: { type: String },
         password: { type: String, default: "" },

@@ -20,7 +20,7 @@ Router.get('/', async (req, res) => {
         const {data: ures} = await axios.get(`https://www.googleapis.com/oauth2/v2/userinfo?access_token=${gres.access_token}`, { headers: {'Accept-Encoding': 'identity'}})
         //console.log('google user data:', ures)
         let { email } = ures;
-        let username = ures.nickname;
+        let username = ures.name;
         if(!username)
             username = ures.email.split('@')[0]
             
@@ -42,6 +42,9 @@ Router.get('/', async (req, res) => {
         }
 
         const user = new User({
+            username,
+            email,
+            avatar: ures.picture,
             google: {
                 username,
                 familiy_name: ures.name,

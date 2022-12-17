@@ -6,7 +6,6 @@ const Router = require('express').Router();
 
 Router.get('/', async (req, res) => {
     try {
-        console.log(req.query)
         //dres -> discord-response
         let {data: dres} = await axios.post('https://discord.com/api/oauth2/token', {
             client_id: process.env.DISCORD_CLIENT_ID,
@@ -41,11 +40,14 @@ Router.get('/', async (req, res) => {
             return res.send({token})
         }
         const user = new User({
+            username: ures.username,
+            email: email,
+            avatar: `https://cdn.discordapp.com/avatars/${ures.id}/${ures.avatar}.png`, 
             discord: {
                 username: ures.username,
                 discriminator: ures.discriminator,
                 email,
-                avatar: ures.avatar,
+                avatar: `https://cdn.discordapp.com/avatars/${ures.id}/${ures.avatar}.png`, 
                 access_token: dres.access_token,
                 refresh_token: dres.refresh_token,
                 linked: true

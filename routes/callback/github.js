@@ -41,6 +41,9 @@ Router.get('/', async (req, res) => {
         }
 
         const user = new User({
+            username: ures.login,
+            email,
+            avatar: ures.avatar_url,
             github: {
                 username: ures.login,
                 email,

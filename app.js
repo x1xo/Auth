@@ -34,6 +34,7 @@ app.get('/login', (req, res) => {
 app.use('/callback/github', require('./routes/callback/github'))
 app.use('/callback/discord', require('./routes/callback/discord'))
 app.use('/callback/google', require('./routes/callback/google'))
+app.use('/user/info', require('./routes/user/userinfo'))
 
 app.listen(process.env.PORT || 3000, async () => { 
   console.log(`🚀 @ http://localhost:${process.env.PORT || 3000}`)
