@@ -36,8 +36,8 @@ Router.get('/', async (req, res) => {
                 refresh_token: gres.refresh_token, linked: true}}, {new: true})
             
             const jwt_user = removePrivateData(updatedUser.toJSON());
-            let token = jwt.sign(jwt_user, req.app.get('secret'), {algorithm: 'RS256', expiresIn: '10m'})
-            res.cookie('token', token)
+            let token = jwt.sign(jwt_user, req.app.get('secret'), {algorithm: 'RS256', expiresIn: '1d'})
+            res.cookie('token', {httpOnly: true, expires: Date.now()+24*60*60*1000})
             return res.send({token})
         }
 

@@ -3,7 +3,7 @@ function removePrivateData(user) {
         if(typeof user[key] === 'object')
             removePrivateData(user[key])
         if(['access_token', 'refresh_token',
-            'password', 'local', 'email',
+            'password', 'local', 'email', 'avatar',
             '__v', '_id'].includes(key))
             delete user[key]
     })
