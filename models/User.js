@@ -4,7 +4,7 @@ module.exports = mongoose.model('Users', mongoose.Schema({
     username: { type: String }, 
     email: { type: String },
     avatar: { type: String, default: '' },
-    
+    admin: { type: Boolean, default: false },
     /* local: {
         username: { type: String },
         password: { type: String, default: "" },

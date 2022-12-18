@@ -20,5 +20,16 @@ function removeData(user, keys) {
     })
     return user;
 }
-module.exports = {removePrivateData, removeData}
+
+function removeInvalidToken(lindex){
+    if(global.invalidTokenTimeout._destroyed && lindex){
+        global.invalidTokenTimeout = setTimeout(async () => {
+            await global.redis.rpop("invalid_tokens")
+            const lindex = await global.redis.lindex("invalid_tokens", -1);
+            removeInvalidToken(lindex)
+        }, parseInt(lindex.split(",")[1])-Date.now())
+    }
+}
+
+module.exports = {removePrivateData, removeData, removeInvalidToken}
 

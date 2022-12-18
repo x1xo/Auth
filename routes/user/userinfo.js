@@ -10,6 +10,9 @@ Router.post('/', async (req, res) => {
         const result = jwt.verify(req.body.token, req.app.get("secret"), {algorithms: ["RS256"]})
         if(parseInt(`${result.exp}000`) < Date.now())
             return res.send({error: true, code: 401, message: "JWT_EXPIRED"})
+        
+        if(checkForInvalidTokens(req.body.token || req.cookies.token), result.exp)
+            return res.send({erorr: true, code: 401, message: "INVALID_TOKEN"})
 
         let user = await User.findOne({id: result.id})
         if(!user) return res.send({error: true, code: 404, message: "NOT_FOUND"})
@@ -28,6 +31,10 @@ Router.post('/', async (req, res) => {
     }
 })
 
-
+async function checkForInvalidTokens(token, eat){
+    if(await global.redis.lpos("invalid_tokens", token))
+        return true;
+    return false;
+}
 
 module.exports=Router

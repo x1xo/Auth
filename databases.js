@@ -1,9 +1,16 @@
-const ioredis = require('ioredis')
+const Redis = require('ioredis')
 const mongoose = require('mongoose');
-const redis = new ioredis(process.env.REDIS_URL)
+const { removeInvalidToken } = require('./Utils');
+const redis = new Redis(process.env.REDIS_URL)
 
-redis.on('connect', () => console.log('[Database] Connected to Redis'))
+global.invalidTokenTimeout = setTimeout(() => {}, 0)
+redis.on('connect', async () => {
+    console.log('[Database] Connected to Redis')
+    const lindex = await global.redis.lindex("invalid_tokens", -1);
+    removeInvalidToken(lindex)
+})
 global.redis = redis;
+
 
 mongoose.connect(process.env.MONGODB_URL, {}, (err) => {
     if(err) {

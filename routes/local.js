@@ -1,5 +1,4 @@
-const axios = require('axios');
-const bcrypt = require('bcrypt')
+/* const bcrypt = require('bcrypt')
 const User = require('../models/User');
 const Router = require('express').Router();
 
@@ -103,4 +102,4 @@ Router.post('/', async (req, res) => {
 })
 
 
-module.exports = Router;
+module.exports = Router; */
