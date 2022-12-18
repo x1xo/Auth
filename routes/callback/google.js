@@ -37,7 +37,7 @@ Router.get('/', async (req, res) => {
             
             const jwt_user = removePrivateData(updatedUser.toJSON());
             let token = jwt.sign(jwt_user, req.app.get('secret'), {algorithm: 'RS256', expiresIn: '10m'})
-            res.cookie('token', token, {httpOnly: true, maxAge: Date.now()+24*60*60*1000})
+            res.cookie('token', token, {httpOnly: true, maxAge: Date.now()+24*60*60*1000, secure: process.env.NODE_ENV === 'production'})
             return res.send({token})
         }
 
@@ -58,7 +58,7 @@ Router.get('/', async (req, res) => {
 
         const jwt_user = removePrivateData(user.toJSON());
         let token = jwt.sign(jwt_user, req.app.get('secret'), {algorithm: 'RS256', expiresIn: '10m'})
-        res.cookie('token', token)
+        res.cookie('token', token, {httpOnly: true, maxAge: Date.now()+24*60*60*1000, secure: process.env.NODE_ENV === 'production'})
         return res.send({token})
     } catch(e) {
         console.log(e)
