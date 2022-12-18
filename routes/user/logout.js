@@ -1,5 +1,5 @@
 const jwt = require('jsonwebtoken')
-const { removeInvalidToken } = require('../../Utils')
+const { checkForInvalidToken } = require('../../Utils')
 const Router = require('express').Router()
 
 Router.get('/', (req, res) => {
@@ -9,20 +9,18 @@ Router.get('/', (req, res) => {
 Router.post('/', async (req, res) => {
     //logout - invalidate jwt
     try {
-        console.log(req.body.token, req.cookies.token)
         if(!req.body.token && !req.cookies.token) return res.send({error: true, code: 401, message: "UNAUTHORIZED"})
+        if(checkForInvalidToken(req.body.token || req.cookies.token)) return res.send({error: true, code: 401, message: "INVALID_TOKEN"})
         const result = jwt.verify(req.body.token || req.cookies.token, req.app.get("secret"), {algorithms: ["RS256"]})
         if(parseInt(`${result.exp}000`) < Date.now())
             return res.send({error: true, code: 401, message: "JWT_EXPIRED"})
-        await global.redis.lpush("invalid_tokens", `${req.body.token || req.cookies.token},${result.exp}000`)
+        await global.redis.zadd("invalid_tokens", parseInt(`${result.exp}000`), `${req.body.token || req.cookies.token}`)
         res.clearCookie('token');
         res.send({error: false, status: "SUCCESS"});
-        const lindex = await global.redis.lindex("invalid_tokens", -1);
-        removeInvalidToken(lindex);   
     } catch (e) {
         if(e.message.includes('jwt expired'))
             return res.send({error: true, message: "JWT_EXPIRED"})
-
+        console.log(e)
         return res.send({error: true,
             code: 500,
             message: "SOMETHING_WENT_WRONG",

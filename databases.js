@@ -3,12 +3,15 @@ const mongoose = require('mongoose');
 const { removeInvalidToken } = require('./Utils');
 const redis = new Redis(process.env.REDIS_URL)
 
-global.invalidTokenTimeout = setTimeout(() => {}, 0)
 redis.on('connect', async () => {
     console.log('[Database] Connected to Redis')
-    const lindex = await global.redis.lindex("invalid_tokens", -1);
-    removeInvalidToken(lindex)
+    //remove all tokens that have expired
+    setInterval(async () => {
+        const invalid_tokens = await redis.zrangebyscore("invalid_tokens", 0, Date.now())
+        await redis.zrem("invalid_tokens", invalid_tokens)
+    }, 5*60*1000)
 })
+
 global.redis = redis;
 
 

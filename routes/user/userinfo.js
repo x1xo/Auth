@@ -1,6 +1,6 @@
 const jwt = require('jsonwebtoken')
 const User = require('../../models/User')
-const { removeData } = require('../../Utils')
+const { removeData, checkForInvalidToken } = require('../../Utils')
 
 const Router = require('express').Router()
 
@@ -11,7 +11,7 @@ Router.post('/', async (req, res) => {
         if(parseInt(`${result.exp}000`) < Date.now())
             return res.send({error: true, code: 401, message: "JWT_EXPIRED"})
         
-        if(checkForInvalidTokens(req.body.token || req.cookies.token), result.exp)
+        if(checkForInvalidToken(req.body.token || req.cookies.token))
             return res.send({erorr: true, code: 401, message: "INVALID_TOKEN"})
 
         let user = await User.findOne({id: result.id})
@@ -31,10 +31,5 @@ Router.post('/', async (req, res) => {
     }
 })
 
-async function checkForInvalidTokens(token, eat){
-    if(await global.redis.lpos("invalid_tokens", token))
-        return true;
-    return false;
-}
 
 module.exports=Router
