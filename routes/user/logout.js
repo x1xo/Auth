@@ -2,6 +2,9 @@ const jwt = require('jsonwebtoken')
 const { removeInvalidToken } = require('../../Utils')
 const Router = require('express').Router()
 
+Router.get('/', (req, res) => {
+    res.send(`<html><script>window.onload = (e) => {fetch('/user/logout', {method: "POST"}).then(res => window.location==="/")}</script></html>`)
+})
 
 Router.post('/', async (req, res) => {
     //logout - invalidate jwt
