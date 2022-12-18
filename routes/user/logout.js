@@ -9,6 +9,7 @@ Router.get('/', (req, res) => {
 Router.post('/', async (req, res) => {
     //logout - invalidate jwt
     try {
+        console.log(req.body.token, req.cookies.token)
         if(!req.body.token && !req.cookies.token) return res.send({error: true, code: 401, message: "UNAUTHORIZED"})
         const result = jwt.verify(req.body.token || req.cookies.token, req.app.get("secret"), {algorithms: ["RS256"]})
         if(parseInt(`${result.exp}000`) < Date.now())
