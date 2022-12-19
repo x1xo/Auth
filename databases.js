@@ -7,8 +7,9 @@ redis.on('connect', async () => {
     console.log('[Database] Connected to Redis')
     setInterval(async () => {
         const invalid_tokens = await redis.zrangebyscore("logouts", 0, Date.now()-24*60*60*1000)
+        if(invalid_tokens.length < 1) return;
         await redis.zrem("logouts", invalid_tokens)
-    }, 24*60*60*1000)
+    }, 1*1000)
 })
 
 global.redis = redis;
