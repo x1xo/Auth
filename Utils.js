@@ -27,7 +27,6 @@ function removeData(user, keys) {
 async function checkForInvalidToken(result){
     //this will be the date of logout in miliseconds
     let lastLogout = await global.redis.zscore("logouts",result.id);
-    console.log('lastLogout', lastLogout)
     if(lastLogout > parseInt(`${result.iat}000`))
         return true;
     return false;
