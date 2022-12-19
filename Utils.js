@@ -20,8 +20,15 @@ function removeData(user, keys) {
     })
     return user;
 }
-async function checkForInvalidToken(token){
-    if(await global.redis.zrank("invalid_tokens", token))
+/**
+ * 
+ * @returns If Invalid: true, If Valid: false
+ */
+async function checkForInvalidToken(result){
+    //this will be the date of logout in miliseconds
+    let lastLogout = await global.redis.zscore("logouts",result.id);
+    console.log('lastLogout', lastLogout)
+    if(lastLogout > parseInt(`${result.iat}000`))
         return true;
     return false;
 }

@@ -11,7 +11,7 @@ Router.post('/', async (req, res) => {
         if(parseInt(`${result.exp}000`) < Date.now())
             return res.send({error: true, code: 401, message: "JWT_EXPIRED"})
         
-        if(checkForInvalidToken(req.body.token || req.cookies.token))
+        if(await checkForInvalidToken(result))
             return res.send({erorr: true, code: 401, message: "INVALID_TOKEN"})
 
         let user = await User.findOne({id: result.id})

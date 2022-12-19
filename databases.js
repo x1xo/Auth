@@ -5,11 +5,10 @@ const redis = new Redis(process.env.REDIS_URL)
 
 redis.on('connect', async () => {
     console.log('[Database] Connected to Redis')
-    //remove all tokens that have expired
     setInterval(async () => {
-        const invalid_tokens = await redis.zrangebyscore("invalid_tokens", 0, Date.now())
-        await redis.zrem("invalid_tokens", invalid_tokens)
-    }, 5*60*1000)
+        const invalid_tokens = await redis.zrangebyscore("logouts", 0, Date.now()-24*60*60*1000)
+        await redis.zrem("logouts", invalid_tokens)
+    }, 24*60*60*1000)
 })
 
 global.redis = redis;
