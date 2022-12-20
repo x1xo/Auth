@@ -1,5 +1,6 @@
 const axios = require('axios');
 const jwt = require('jsonwebtoken');
+const Apps = require('../../models/Apps');
 const User = require('../../models/User');
 const { removePrivateData } = require('../../Utils');
 const Router = require('express').Router();
