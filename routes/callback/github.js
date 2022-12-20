@@ -10,7 +10,7 @@ Router.get('/', async (req, res) => {
         let {data: gres} = await axios.post("https://github.com/login/oauth/access_token", {
             client_id: process.env.GITHUB_CLIENT_ID,
             client_secret: process.env.GITHUB_CLIENT_SECRET,
-            redirect_uri: `${process.env.NODE_ENV === 'production' ? process.env.GLOBAL_URL : process.env.LOCAL_URL}/callback/github`,
+            redirect_uri: `${process.env.NODE_ENV === 'production' ? process.env.GLOBAL_URL : process.env.LOCAL_URL}/callback/github?app=${req.query.app}`,
             code: req.query.code }, { headers: { 'Accept': 'application/json', 'Accept-Encoding': 'identity' }})
         //console.log('github token data:', gres)
         //ures -> user-response
@@ -35,9 +35,14 @@ Router.get('/', async (req, res) => {
                 access_token: gres.access_token, linked: true}}, {new: true})
 
             const jwt_user = removePrivateData(updatedUser.toJSON());
-            let token = jwt.sign(jwt_user, req.app.get('secret'), {algorithm: 'RS256', expiresIn: process.env.NODE_ENV === 'production' ? '1d':'10m'})
+            const app = await Apps.findOne({id: req.query.app})
+            if(!app) return res.send({error: true, message: "INVALID_APP_ID"})
+
+            let token = jwt.sign(jwt_user, req.app.get('secret'), {algorithm: 'RS256', expiresIn: process.env.NODE_ENV === 'production' ? '1d':'10m',
+            audience: app.domain, issuer: process.env.NODE_ENV === 'production' ? process.env.GLOBAL_URL : process.env.LOCAL_URL})
+
             res.cookie('token', token, {httpOnly: true, maxAge: Date.now()+24*60*60*1000, secure: process.env.NODE_ENV === 'production'})
-            return res.send({token})
+            return res.redirect(app.domain+`?token=${token}`)
         }
 
         const user = new User({
@@ -54,9 +59,14 @@ Router.get('/', async (req, res) => {
         }); user.save()
 
         const jwt_user = removePrivateData(user.toJSON());
-        let token = jwt.sign(jwt_user, req.app.get('secret'), {algorithm: 'RS256', expiresIn: process.env.NODE_ENV === 'production' ? '1d':'10m'})
+        const app = await Apps.findOne({id: req.query.app})
+        if(!app) return res.send({error: true, message: "INVALID_APP_ID"})
+        
+        let token = jwt.sign(jwt_user, req.app.get('secret'), {algorithm: 'RS256', expiresIn: process.env.NODE_ENV === 'production' ? '1d':'10m',
+        audience: app.domain, issuer: process.env.NODE_ENV === 'production' ? process.env.GLOBAL_URL : process.env.LOCAL_URL})
+
         res.cookie('token', token, {httpOnly: true, maxAge: Date.now()+24*60*60*1000, secure: process.env.NODE_ENV === 'production'})
-        return res.send({token})
+        return res.redirect(app.redirect_uri+`?token=${token}`)
     } catch(e) {
         return res.send({
             error: true,

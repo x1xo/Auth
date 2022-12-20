@@ -2,6 +2,7 @@ require('dotenv').config();
 const cors = require('cors')
 const express = require('express');
 const fs = require('fs');
+const Apps = require('./models/Apps');
 const Certs = require('./models/Certs');
 
 const app = express();
@@ -17,19 +18,36 @@ app.use(express.static('public'))
 app.get('/', (req, res) => res.send({message: "Xixo Auth Server v1.0"}))
 app.get('/keys', (req, res) => { res.send(require('./certs/keys.json')) })
 
-app.get('/login', (req, res) => {
+app.all('/login', async (req, res) => {
   let oAuthLinks = {
-    "github": `https://github.com/login/oauth/authorize?client_id=${process.env.GITHUB_CLIENT_ID}&scope=user%20user:email%20repo%20repo_deployment`,
-    "discord": `https://discord.com/oauth2/authorize?response_type=code&client_id=${process.env.DISCORD_CLIENT_ID}&scope=identify%20guilds.join%20email&prompt=consent&redirect_uri=${process.env.NODE_ENV==='production' ? process.env.GLOBAL_URL : process.env.LOCAL_URL}/callback/discord`,
-    "google": `https://accounts.google.com/o/oauth2/v2/auth?redirect_uri=${process.env.NODE_ENV === 'production' ? process.env.GLOBAL_URL : process.env.LOCAL_URL}/callback/google&prompt=consent&response_type=code&client_id=${process.env.GOOGLE_CLIENT_ID}&scope=profile+email&access_type=offline` }
+    "github": `https://github.com/login/oauth/authorize?client_id=<client_id>&scope=user%20user:email%20repo%20repo_deployment&redirect_uri=<redirect_uri>`,
+    "discord": `https://discord.com/oauth2/authorize?client_id=<client_id>&response_type=code&scope=identify%20guilds.join%20email&prompt=consent&redirect_uri=<redirect_uri>`,
+    "google": `https://accounts.google.com/o/oauth2/v2/auth?client_id=<client_id>&prompt=consent&response_type=code&scope=profile+email&access_type=offline&redirect_uri=<redirect_uri>` }
 
   if(!req.query.type || !oAuthLinks[req.query.type]) 
     return res.send({error: true, message: "INVALID_LOGIN_TYPE"})
 
-  if(req.query.res === "json")
-    return res.send({link: oAuthLinks[req.query.type]})
+  if(!req.query.app)
+    return res.send({error: true, message: "INVALID_REDIRECT_URI"})
+  
+  const app = await Apps.findOne({id: req.query.app})
+  if(!app) return res.send({error: true, message: "INVALID_REDIRECT_URI"})
 
-  return res.redirect(oAuthLinks[req.query.type])
+  let credentials = {
+    "github": {client_id: process.env.GITHUB_CLIENT_ID},
+    "discord": {client_id: process.env.DISCORD_CLIENT_ID},
+    "google": {client_id: process.env.GOOGLE_CLIENT_ID}
+  }
+
+  let link = oAuthLinks[req.query.type]
+  link = link.replace("<client_id>", credentials[req.query.type].client_id)
+  link = link.replace("<redirect_uri>", 
+      process.env.NODE_ENV === "production" ? process.env.GLOBAL_URL : process.env.LOCAL_URL+`/callback/${req.query.type}?app=${req.query.app}`)
+
+  if(req.query.res === "json")
+    return res.send({link})
+
+  return res.redirect(link)
 })
 
 app.use('/callback/github', require('./routes/callback/github'))

@@ -1,5 +1,6 @@
 const axios = require('axios');
 const jwt = require('jsonwebtoken');
+const Apps = require('../../models/Apps');
 const User = require('../../models/User');
 const { removePrivateData } = require('../../Utils');
 const Router = require('express').Router();
@@ -12,7 +13,7 @@ Router.get('/', async (req, res) => {
             client_secret: process.env.DISCORD_CLIENT_SECRET,
             grant_type: 'authorization_code',
             code: req.query.code,
-            redirect_uri: `${process.env.NODE_ENV === 'production' ? process.env.GLOBAL_URL : process.env.LOCAL_URL}/callback/discord`,
+            redirect_uri: `${process.env.NODE_ENV === 'production' ? process.env.GLOBAL_URL : process.env.LOCAL_URL}/callback/discord?app=${req.query.app}`,
         }, { headers: { 'Content-Type': 'application/x-www-form-urlencoded', 'Accept-Encoding': 'identity'}})
         //console.log('discord token data:', dres)
         //ures -> discords user response
@@ -35,9 +36,13 @@ Router.get('/', async (req, res) => {
                 access_token: dres.access_token, refresh_token: dres.refresh_token }}, {new: true})
 
             const jwt_user = removePrivateData(updatedUser.toJSON());
-            let token = jwt.sign(jwt_user, req.app.get('secret'), {algorithm: 'RS256', expiresIn: process.env.NODE_ENV === 'production' ? '1d':'10m'})
+            const app = await Apps.findOne({id: req.query.app});
+            if(!app) return res.send({error: true, message: "INVALID_APP_ID"})
+            let token = jwt.sign(jwt_user, req.app.get('secret'), {algorithm: 'RS256', expiresIn: process.env.NODE_ENV === 'production' ? '1d':'10m',
+            audience: app.domain, issuer: process.env.NODE_ENV === 'production' ? process.env.GLOBAL_URL : process.env.LOCAL_URL})
+
             res.cookie('token', token, {httpOnly: true, maxAge: Date.now()+24*60*60*1000, secure: process.env.NODE_ENV === 'production'})
-            return res.send({token})
+            return res.redirect(app.redirect_uri+`?token=${token}`)
         }
         const user = new User({
             username: ures.username,
@@ -55,9 +60,14 @@ Router.get('/', async (req, res) => {
         }); user.save()
 
         const jwt_user = removePrivateData(user.toJSON());
-        let token = jwt.sign(jwt_user, req.app.get('secret'), {algorithm: 'RS256', expiresIn: process.env.NODE_ENV === 'production' ? '1d':'10m'})
+        const app = await Apps.findOne({id: req.query.app});
+        if(!app) return res.send({error: true, message: "INVALID_APP_ID"})
+        
+        let token = jwt.sign(jwt_user, req.app.get('secret'), {algorithm: 'RS256', expiresIn: process.env.NODE_ENV === 'production' ? '1d':'10m',
+        audience: app.domain, issuer: process.env.NODE_ENV === 'production' ? process.env.GLOBAL_URL : process.env.LOCAL_URL})
+
         res.cookie('token', token, {httpOnly: true, maxAge: Date.now()+24*60*60*1000, secure: process.env.NODE_ENV === 'production'})
-        return res.send({token})
+        return res.redirect(app.redirect_uri+`?token=${token}`)
     } catch(e) {
         console.log(e)
         return res.send({
