@@ -42,7 +42,7 @@ app.all('/login', async (req, res) => {
   let link = oAuthLinks[req.query.type]
   link = link.replace("<client_id>", credentials[req.query.type].client_id)
   link = link.replace("<redirect_uri>", 
-      process.env.NODE_ENV === "production" ? process.env.GLOBAL_URL : process.env.LOCAL_URL+`/callback/${req.query.type}?app=${req.query.app}`)
+      `${process.env.NODE_ENV === "production" ? process.env.GLOBAL_URL : process.env.LOCAL_URL}/callback/${req.query.type}?app=${req.query.app}`)
 
   if(req.query.res === "json")
     return res.send({link})
