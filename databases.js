@@ -1,6 +1,5 @@
 const Redis = require('ioredis')
 const mongoose = require('mongoose');
-const { removeInvalidToken } = require('./Utils');
 const redis = new Redis(process.env.REDIS_URL)
 
 redis.on('connect', async () => {
@@ -14,8 +13,8 @@ redis.on('connect', async () => {
 
 global.redis = redis;
 
-
-mongoose.connect(process.env.MONGODB_URL, {}, (err) => {
+mongoose.set('strictQuery', true);
+mongoose.connect(process.env.MONGODB_URL, (err) => {
     if(err) {
         console.log('[Database] [MongoDB]' + err)
         process.exit(1)
