@@ -43,7 +43,7 @@ Router.get('/', async (req, res) => {
             audience: app.domain, issuer: process.env.NODE_ENV === 'production' ? process.env.GLOBAL_URL : process.env.LOCAL_URL})
 
             res.cookie('token', token, {httpOnly: true, maxAge: Date.now()+24*60*60*1000, secure: process.env.NODE_ENV === 'production'})
-            return res.redirect(app.domain+`?token=${token}`)
+            return res.redirect(app.redirect_uri+`?token=${token}`)
         }
 
         const user = new User({
