@@ -9,18 +9,18 @@ type UserInfo struct {
 	Username  string      `json:"username" bson:"username"`
 	Email     string      `json:"email" bson:"email"`
 	AvatarURL string      `json:"avatar_url" bson:"avatar_url"`
-	Github    GithubUser  `json:"github" bson:"github"`
-	Discord   DiscordUser `json:"discord" bson:"discord"`
-	Google    GoogleUser  `json:"google" bson:"google"`
+	Github    GithubUser  `json:"github,omitempty" bson:"github"`
+	Discord   DiscordUser `json:"discord,omitempty" bson:"discord"`
+	Google    GoogleUser  `json:"google,omitempty" bson:"google"`
 	CreatedAt time.Time   `json:"created_at" bson:"created_at"`
 	UpdatedAt time.Time   `json:"updated_at" bson:"updated_at"`
 }
 
 type GithubUser struct {
-	Username  string    `json:"login"`
-	AvatarURL string    `json:"avatar_url"`
-	CreatedAt time.Time `json:"created_at"`
-	UpdatedAt time.Time `json:"updated_at"`
+	Username  string    `json:"login,omitempty"`
+	AvatarURL string    `json:"avatar_url,omitempty"`
+	CreatedAt time.Time `json:"created_at,omitempty"`
+	UpdatedAt time.Time `json:"updated_at,omitempty"`
 }
 
 type GithubUserEmail struct {
@@ -30,19 +30,18 @@ type GithubUserEmail struct {
 }
 
 type DiscordUser struct {
-	Id            string    `json:"id"`
-	Email         string    `json:"email"`
-	Username      string    `json:"username"`
-	Discriminator string    `json:"discriminator"`
-	AvatarURL     string    `json:"avatar_url"`
-	Verified      bool      `json:"verified"`
-	CreatedAt     time.Time `json:"created_at"`
-	UpdatedAt     time.Time `json:"updated_at"`
+	Id            string    `json:"id,omitempty"`
+	Email         string    `json:"email,omitempty"`
+	Username      string    `json:"username,omitempty"`
+	Discriminator string    `json:"discriminator,omitempty"`
+	AvatarURL     string    `json:"avatar_url,omitempty"`
+	Avatar        string    `json:"avatar,omitempty"`
+	Verified      bool      `json:"verified,omitempty"`
 }
 
 type GoogleUser struct {
-	Id        string `json:"id"`
-	Email     string `json:"email"`
-	Username  string `json:"name"`
-	AvatarURL string `json:"picture"`
+	Id        string `json:"id,omitempty"`
+	Email     string `json:"email,omitempty"`
+	Username  string `json:"name,omitempty"`
+	AvatarURL string `json:"picture,omitempty"`
 }

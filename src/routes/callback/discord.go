@@ -218,5 +218,8 @@ func getDiscordUserInfo(data *DiscordAccessTokenResponse) (*models.DiscordUser, 
 	if err != nil {
 		return nil, err
 	}
+	userInfo.AvatarURL = "https://cdn.discordapp.com/avatars/" + userInfo.Id + "/" + userInfo.Avatar + ".png"
+	userInfo.Avatar = ""
+
 	return &userInfo, nil
 }

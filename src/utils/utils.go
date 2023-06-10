@@ -24,15 +24,15 @@ type Certs struct {
 }
 
 var privateKey *rsa.PrivateKey
-var publicKey *string
+var PublicKey *string
 
 func GenerateJWKS() (*jwk.Set, error) {
-	if publicKey == nil {
+	if PublicKey == nil {
 		if err := LoadCertificates(); err != nil {
 			return nil, err
 		}
 	}
-	jwkKey, err := jwk.ParseKey([]byte(*publicKey), jwk.WithPEM(true))
+	jwkKey, err := jwk.ParseKey([]byte(*PublicKey), jwk.WithPEM(true))
 	if err != nil {
 		return nil, err
 	}
@@ -61,7 +61,7 @@ func LoadCertificates() error {
 
 	privateKey = privKey.(*rsa.PrivateKey)
 
-	publicKey = &certs.PublicKey
+	PublicKey = &certs.PublicKey
 	return nil
 }
 
