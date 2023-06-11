@@ -32,10 +32,7 @@ func main() {
 	}
 
 	app.Get("/", func(c *fiber.Ctx) error {
-		return c.JSON(fiber.Map{
-			"x-forwared-for": c.Get("X-Forwarded-For"),
-			"abc": c.GetReqHeaders(),
-		})
+		return c.SendString("Identity provider by x1xo. All rights reserved.")
 	})
 
 	app.Get("/jwks", func(c *fiber.Ctx) error {
