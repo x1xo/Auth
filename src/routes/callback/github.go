@@ -124,7 +124,7 @@ func CallbackGithub(c *fiber.Ctx) error {
 	err = utils.CreateSesssion(user.Id, tokenId, c.IP(), string(c.Context().UserAgent()), int(time.Hour*3))
 
 	if err != nil {
-		fmt.Println("[Error] Couldn't set token in redis: \n", err)
+		log.Println("[Error] Couldn't set token in redis: \n", err)
 		return c.Status(500).JSON(fiber.Map{
 			"error": true,
 			"code":  "INTERNAL_SERVER_ERROR",

@@ -92,14 +92,7 @@ func CallbackGoogle(c *fiber.Ctx) error {
 		})
 	}
 
-	tokenJson, _ := json.Marshal(fiber.Map{
-		"ip":        c.IP(),
-		"userAgent": string(c.Context().UserAgent()),
-		"createdAt": time.Now().UnixMilli(),
-		"expiresAt": time.Now().Add(time.Hour * 3).UnixMilli(),
-	})
-
-	err = databases.GetRedis().Set(context.Background(), tokenId, tokenJson, time.Hour*3).Err()
+	err = utils.CreateSesssion(user.Id, tokenId, c.IP(), string(c.Context().UserAgent()), int(time.Hour*3))
 
 	if err != nil {
 		log.Println("[Error] Couldn't set token in redis: \n", err)
