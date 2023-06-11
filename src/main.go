@@ -31,6 +31,13 @@ func main() {
 		panic(err)
 	}
 
+	app.Get("/", func(c *fiber.Ctx) error {
+		return c.JSON(fiber.Map{
+			"x-forwared-for": c.Get("X-Forwarded-For"),
+			"abc": c.GetReqHeaders(),
+		})
+	})
+
 	app.Get("/jwks", func(c *fiber.Ctx) error {
 		return c.JSON(jwks)
 	})
