@@ -6,8 +6,11 @@ import (
 	"crypto/rsa"
 	"crypto/x509"
 	"encoding/hex"
+	"encoding/json"
 	"encoding/pem"
+	"io"
 	"log"
+	"net/http"
 	"time"
 
 	"github.com/google/uuid"
@@ -15,6 +18,7 @@ import (
 	"github.com/lestrrat-go/jwx/jwk"
 	"github.com/lestrrat-go/jwx/jwt"
 	"github.com/x1xo/Auth/src/databases"
+	"github.com/x1xo/Auth/src/databases/models"
 	"go.mongodb.org/mongo-driver/bson"
 )
 
@@ -25,6 +29,7 @@ type Certs struct {
 
 var privateKey *rsa.PrivateKey
 var PublicKey *string
+var PublicJWTKey *jwk.Key
 
 func GenerateJWKS() (*jwk.Set, error) {
 	if PublicKey == nil {
@@ -62,6 +67,14 @@ func LoadCertificates() error {
 	privateKey = privKey.(*rsa.PrivateKey)
 
 	PublicKey = &certs.PublicKey
+
+	jwkKey, err := jwk.ParseKey([]byte(*PublicKey), jwk.WithPEM(true))
+	if err != nil {
+		return err
+	}
+
+	PublicJWTKey = &jwkKey
+
 	return nil
 }
 
@@ -74,6 +87,52 @@ func RandomId(lenght int) (string, error) {
 
 	randomString := hex.EncodeToString(randomBytes)
 	return randomString, nil
+}
+
+func CreateSesssion(userId, tokenId, ipAddress, userAgent string, expires int) error {
+	redis := databases.GetRedis()
+
+	ipInfo, err := GetIPInfo(ipAddress)
+	if err != nil {
+		return err
+	}
+
+	session := models.UserSession{
+		UserId:    userId,
+		TokenId:   tokenId,
+		IPAddress: *ipInfo,
+		UserAgent: userAgent,
+	}
+
+	jsonSession, err := json.Marshal(session)
+	if err != nil {
+		return err
+	}
+
+	return redis.Set(context.Background(), userId+"_"+tokenId, string(jsonSession), time.Second*time.Duration(expires)).Err()
+
+}
+
+func GetIPInfo(ipAddress string) (*models.IPAddressInfo, error) {
+	infoReq, err := http.Get("https://ipinfo.io/" + ipAddress + "/json")
+	if err != nil {
+		return nil, err
+	}
+
+	defer infoReq.Body.Close()
+
+	body, err := io.ReadAll(infoReq.Body)
+	if err != nil {
+		return nil, err
+	}
+
+	var ipInfo models.IPAddressInfo
+	err = json.Unmarshal(body, &ipInfo)
+	if err != nil {
+		return nil, err
+	}
+
+	return &ipInfo, nil
 }
 
 func GenerateToken(userId string) (string, string, error) {

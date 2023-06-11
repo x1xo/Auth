@@ -33,6 +33,8 @@ func main() {
 	})
 
 	app.Get("/api/user", routes.GetUser)
+	app.Get("/api/user/sessions", routes.GetUserSessions)
+	app.Get("/api/user/sessions/:tokenId", routes.GetUserSession)
 
 	app.Get("/login", routes.Login)
 

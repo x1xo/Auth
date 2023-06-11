@@ -199,7 +199,7 @@ func getGoogleResponse(code string) (*GoogleAccessTokenResponse, error) {
 
 	if responseMap.Error != "" {
 		log.Println("[Error] Invalid code was passed to the request somehow.")
-		return nil, err
+		return nil, errors.New("invalid code was passed to the request somehow")
 	}
 
 	return &responseMap, nil

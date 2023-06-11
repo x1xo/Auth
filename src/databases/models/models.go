@@ -16,6 +16,20 @@ type UserInfo struct {
 	UpdatedAt time.Time   `json:"updated_at" bson:"updated_at"`
 }
 
+type UserSession struct {
+	UserId    string        `json:"user_id" bson:"user_id"`
+	TokenId   string        `json:"token_id" bson:"token_id"`
+	UserAgent string        `json:"user_agent" bson:"user_agent"`
+	IPAddress IPAddressInfo `json:"ip_address" bson:"ip_address"`
+}
+
+type IPAddressInfo struct {
+	IP      string `json:"ip" bson:"ip"`
+	City    string `json:"city" bson:"city"`
+	Region  string `json:"region" bson:"region"`
+	Country string `json:"country" bson:"country"`
+}
+
 type GithubUser struct {
 	Username  string    `json:"login,omitempty"`
 	AvatarURL string    `json:"avatar_url,omitempty"`
@@ -30,13 +44,13 @@ type GithubUserEmail struct {
 }
 
 type DiscordUser struct {
-	Id            string    `json:"id,omitempty"`
-	Email         string    `json:"email,omitempty"`
-	Username      string    `json:"username,omitempty"`
-	Discriminator string    `json:"discriminator,omitempty"`
-	AvatarURL     string    `json:"avatar_url,omitempty"`
-	Avatar        string    `json:"avatar,omitempty"`
-	Verified      bool      `json:"verified,omitempty"`
+	Id            string `json:"id,omitempty"`
+	Email         string `json:"email,omitempty"`
+	Username      string `json:"username,omitempty"`
+	Discriminator string `json:"discriminator,omitempty"`
+	AvatarURL     string `json:"avatar_url,omitempty"`
+	Avatar        string `json:"avatar,omitempty"`
+	Verified      bool   `json:"verified,omitempty"`
 }
 
 type GoogleUser struct {

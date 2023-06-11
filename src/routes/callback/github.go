@@ -121,14 +121,7 @@ func CallbackGithub(c *fiber.Ctx) error {
 		})
 	}
 
-	tokenJson, _ := json.Marshal(fiber.Map{
-		"ip":        c.IP(),
-		"userAgent": string(c.Context().UserAgent()),
-		"createdAt": time.Now().UnixMilli(),
-		"expiresAt": time.Now().Add(time.Hour * 3).UnixMilli(),
-	})
-
-	err = databases.GetRedis().Set(context.Background(), tokenId, tokenJson, time.Hour*3).Err()
+	err = utils.CreateSesssion(user.Id, tokenId, c.IP(), string(c.Context().UserAgent()), int(time.Hour*3))
 
 	if err != nil {
 		fmt.Println("[Error] Couldn't set token in redis: \n", err)
@@ -195,7 +188,7 @@ func getGithubResponse(code string) (*GithubAccessTokenResponse, error) {
 
 	if responseMap.Error != "" {
 		log.Println("[Error] Invalid code was passed to the request somehow.")
-		return nil, err
+		return nil, errors.New("invalid code was passed to the request somehow")
 	}
 
 	return &responseMap, nil
