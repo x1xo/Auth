@@ -54,6 +54,15 @@ func GetUser(c *fiber.Ctx) error {
 		})
 	}
 
+	tokenId, _ := token.Get("tokenId")
+	err = databases.GetRedis().Get(context.Background(), userId+"_"+tokenId.(string)).Err()
+	if err != nil {
+		return c.Status(400).JSON(fiber.Map{
+			"error": true,
+			"code":  "INVALID_TOKEN",
+		})
+	}
+
 	var user models.UserInfo
 	databases.GetMongoDatabase().Collection("users").FindOne(context.Background(), bson.M{"id": userId}).Decode(&user)
 
@@ -98,12 +107,20 @@ func GetUserSessions(c *fiber.Ctx) error {
 			"code":  "INVALID_TOKEN",
 		})
 	}
+	tokenId, _ := token.Get("tokenId")
+	err = databases.GetRedis().Get(context.Background(), userId+"_"+tokenId.(string)).Err()
+	if err != nil {
+		return c.Status(400).JSON(fiber.Map{
+			"error": true,
+			"code":  "INVALID_TOKEN",
+		})
+	}
 
 	keys := databases.GetRedis().Keys(context.Background(), userId+"*").Val()
 
 	var sessions []models.UserSession
 
-	jsonSessions, err := databases.GetRedis().MGet(context.Background(), keys...).Result();
+	jsonSessions, err := databases.GetRedis().MGet(context.Background(), keys...).Result()
 	if err != nil {
 		return c.Status(500).JSON(fiber.Map{
 			"error": true,
@@ -127,10 +144,8 @@ func GetUserSessions(c *fiber.Ctx) error {
 	return c.Status(200).JSON(sessions)
 }
 
-
-
 func GetUserSession(c *fiber.Ctx) error {
-	tokenId := c.Params("tokenId");
+	tokenId := c.Params("tokenId")
 	if tokenId == "" {
 		return c.Status(400).JSON(fiber.Map{
 			"error": true,
@@ -175,7 +190,17 @@ func GetUserSession(c *fiber.Ctx) error {
 		})
 	}
 
-	sessionJSON := databases.GetRedis().Get(context.Background(), userId+"_"+tokenId).Val();
+	currentTokenId, _ := token.Get("tokenId")
+	err = databases.GetRedis().Get(context.Background(), userId+"_"+currentTokenId.(string)).Err()
+	if err != nil {
+		return c.Status(400).JSON(fiber.Map{
+			"error": true,
+			"code":  "INVALID_TOKEN",
+		})
+	}
+
+
+	sessionJSON := databases.GetRedis().Get(context.Background(), userId+"_"+tokenId).Val()
 	if sessionJSON == "" {
 		return c.Status(400).JSON(fiber.Map{
 			"error": true,
@@ -183,8 +208,8 @@ func GetUserSession(c *fiber.Ctx) error {
 		})
 	}
 
-	var session models.UserSession;
-	err = json.Unmarshal([]byte(sessionJSON), &session);
+	var session models.UserSession
+	err = json.Unmarshal([]byte(sessionJSON), &session)
 	if err != nil {
 		return c.Status(500).JSON(fiber.Map{
 			"error": true,
@@ -192,6 +217,6 @@ func GetUserSession(c *fiber.Ctx) error {
 		})
 	}
 
-	return c.Status(200).JSON(session);
+	return c.Status(200).JSON(session)
 
 }
