@@ -19,7 +19,10 @@ func main() {
 	go databases.GetRedis()
 	databases.GetMongo()
 
-	app := fiber.New()
+	app := fiber.New(fiber.Config{
+		ProxyHeader: "X-Forwarded-For",
+		EnableTrustedProxyCheck: true,
+	})
 	app.Use(logger.New())
 
 	jwks, err := utils.GenerateJWKS()
