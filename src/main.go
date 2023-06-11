@@ -21,7 +21,7 @@ func main() {
 
 	app := fiber.New(fiber.Config{
 		ProxyHeader: "X-Forwarded-For",
-		EnableTrustedProxyCheck: true,
+		EnableTrustedProxyCheck: false,
 	})
 	app.Use(logger.New())
 
