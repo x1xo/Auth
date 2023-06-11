@@ -42,6 +42,9 @@ func main() {
 	app.Get("/api/user", routes.GetUser)
 	app.Get("/api/user/sessions", routes.GetUserSessions)
 	app.Get("/api/user/sessions/:tokenId", routes.GetUserSession)
+	app.Delete("/api/user/sessions/invalidate_all", routes.InvalidateAllSessions);
+	app.Delete("/api/user/sessions/:tokenId", routes.InvalidateSession)
+	
 
 	app.Get("/login", routes.Login)
 

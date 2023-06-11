@@ -220,3 +220,130 @@ func GetUserSession(c *fiber.Ctx) error {
 	return c.Status(200).JSON(session)
 
 }
+
+func InvalidateSession(c *fiber.Ctx) error {
+	tokenId := c.Params("tokenId")
+	if tokenId == "" {
+		return c.Status(400).JSON(fiber.Map{
+			"error": true,
+			"code":  "INVALID_TOKEN_ID",
+		})
+	}
+
+	var tokenHeader string
+	header := c.Get("Authorization")
+	if header != "" {
+		tokenHeader = strings.Split(c.Get("Authorization"), " ")[1]
+	}
+	tokenCookie := c.Cookies("access_token")
+
+	if tokenHeader == "" && tokenCookie == "" {
+		return c.Status(401).JSON(fiber.Map{
+			"error": true,
+			"code":  "UNAUTHORIZED",
+		})
+	}
+
+	var tokenString string
+	if tokenHeader != "" {
+		tokenString = tokenHeader
+	} else {
+		tokenString = tokenCookie
+	}
+
+	token, err := jwt.ParseString(tokenString, jwt.WithVerify(jwa.RS256, *utils.PublicJWTKey))
+	if err != nil {
+		return c.Status(400).JSON(fiber.Map{
+			"error": true,
+			"code":  "INVALID_TOKEN",
+		})
+	}
+
+	userId := token.Subject()
+	if userId == "" {
+		return c.Status(400).JSON(fiber.Map{
+			"error": true,
+			"code":  "INVALID_TOKEN",
+		})
+	}
+
+	currentTokenId, _ := token.Get("tokenId")
+	err = databases.GetRedis().Get(context.Background(), userId+"_"+currentTokenId.(string)).Err()
+	if err != nil {
+		return c.Status(400).JSON(fiber.Map{
+			"error": true,
+			"code":  "INVALID_TOKEN",
+		})
+	}
+
+	err = databases.GetRedis().Del(context.Background(), userId+"_"+tokenId).Err();
+	if err != nil {
+		return c.Status(404).JSON(fiber.Map{
+			"error": true,
+			"code":  "NOT_FOUND",
+		})
+	}
+
+	return c.Status(200).JSON(fiber.Map{
+		"error": false,
+		"code":  "OK",
+	})
+}
+
+func InvalidateAllSessions(c *fiber.Ctx) error {
+	var tokenHeader string
+	header := c.Get("Authorization")
+	if header != "" {
+		tokenHeader = strings.Split(c.Get("Authorization"), " ")[1]
+	}
+	tokenCookie := c.Cookies("access_token")
+
+	if tokenHeader == "" && tokenCookie == "" {
+		return c.Status(401).JSON(fiber.Map{
+			"error": true,
+			"code":  "UNAUTHORIZED",
+		})
+	}
+
+	var tokenString string
+	if tokenHeader != "" {
+		tokenString = tokenHeader
+	} else {
+		tokenString = tokenCookie
+	}
+
+	token, err := jwt.ParseString(tokenString, jwt.WithVerify(jwa.RS256, *utils.PublicJWTKey))
+	if err != nil {
+		return c.Status(400).JSON(fiber.Map{
+			"error": true,
+			"code":  "INVALID_TOKEN",
+		})
+	}
+
+	userId := token.Subject()
+	if userId == "" {
+		return c.Status(400).JSON(fiber.Map{
+			"error": true,
+			"code":  "INVALID_TOKEN",
+		})
+	}
+
+	currentTokenId, _ := token.Get("tokenId")
+	err = databases.GetRedis().Get(context.Background(), userId+"_"+currentTokenId.(string)).Err()
+	if err != nil {
+		return c.Status(400).JSON(fiber.Map{
+			"error": true,
+			"code":  "INVALID_TOKEN",
+		})
+	}
+
+	keys := databases.GetRedis().Keys(context.Background(), userId+"*").Val();
+	for _, key := range keys {
+		databases.GetRedis().Del(context.Background(), key).Err();
+	}
+
+	return c.Status(200).JSON(fiber.Map{
+		"error": false,
+		"code":  "OK",
+	})
+}
