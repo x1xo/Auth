@@ -20,6 +20,8 @@ type UserSession struct {
 	UserId    string        `json:"user_id" bson:"user_id"`
 	TokenId   string        `json:"token_id" bson:"token_id"`
 	UserAgent string        `json:"user_agent" bson:"user_agent"`
+	IssuedAt  time.Time     `json:"issued_at" bson:"issued_at"`
+	ExpiresAt time.Time     `json:"expired_at" bson:"expired_at"`
 	IPAddress IPAddressInfo `json:"ip_address" bson:"ip_address"`
 }
 

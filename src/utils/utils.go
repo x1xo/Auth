@@ -103,6 +103,8 @@ func CreateSesssion(userId, tokenId, ipAddress, userAgent string, expires int) e
 		TokenId:   tokenId,
 		IPAddress: *ipInfo,
 		UserAgent: userAgent,
+		IssuedAt:  time.Now(),
+		ExpiresAt: time.Now().Add(time.Duration(expires)),
 	}
 
 	jsonSession, err := json.Marshal(session)
