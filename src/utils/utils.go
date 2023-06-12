@@ -8,6 +8,7 @@ import (
 	"encoding/hex"
 	"encoding/json"
 	"encoding/pem"
+	"errors"
 	"io"
 	"log"
 	"net/http"
@@ -30,6 +31,17 @@ type Certs struct {
 var privateKey *rsa.PrivateKey
 var PublicKey *string
 var PublicJWTKey *jwk.Key
+
+func RandomId(lenght int) (string, error) {
+	randomBytes := make([]byte, lenght)
+	_, err := rand.Read(randomBytes)
+	if err != nil {
+		return "", err
+	}
+
+	randomString := hex.EncodeToString(randomBytes)
+	return randomString, nil
+}
 
 func GenerateJWKS() (*jwk.Set, error) {
 	if PublicKey == nil {
@@ -78,17 +90,6 @@ func LoadCertificates() error {
 	return nil
 }
 
-func RandomId(lenght int) (string, error) {
-	randomBytes := make([]byte, lenght)
-	_, err := rand.Read(randomBytes)
-	if err != nil {
-		return "", err
-	}
-
-	randomString := hex.EncodeToString(randomBytes)
-	return randomString, nil
-}
-
 func CreateSesssion(userId, tokenId, ipAddress, userAgent string, expires int) error {
 	redis := databases.GetRedis()
 
@@ -110,7 +111,6 @@ func CreateSesssion(userId, tokenId, ipAddress, userAgent string, expires int) e
 	}
 
 	return redis.Set(context.Background(), userId+"_"+tokenId, string(jsonSession), time.Duration(expires)).Err()
-
 }
 
 func GetIPInfo(ipAddress string) (*models.IPAddressInfo, error) {
@@ -150,4 +150,24 @@ func GenerateToken(userId string) (string, string, error) {
 	}
 	tokenId, _ := token.Get("tokenId")
 	return string(signedToken), tokenId.(string), nil
+}
+
+func ValidateToken(tokenString string) (*jwt.Token, error) {
+	token, err := jwt.ParseString(tokenString, jwt.WithVerify(jwa.RS256, *PublicJWTKey))
+	if err != nil {
+		return nil, err
+	}
+
+	userId := token.Subject()
+	if userId == "" {
+		return nil, errors.New("invalid token")
+	}
+
+	tokenId, _ := token.Get("tokenId")
+	err = databases.GetRedis().Get(context.Background(), userId+"_"+tokenId.(string)).Err()
+	if err != nil {
+		return nil, errors.New("invalid token")
+	}
+
+	return &token, nil
 }

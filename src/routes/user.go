@@ -3,12 +3,9 @@ package routes
 import (
 	"context"
 	"encoding/json"
-	"fmt"
 	"strings"
 
 	"github.com/gofiber/fiber/v2"
-	"github.com/lestrrat-go/jwx/jwa"
-	"github.com/lestrrat-go/jwx/jwt"
 	"github.com/x1xo/Auth/src/databases"
 	"github.com/x1xo/Auth/src/databases/models"
 	"github.com/x1xo/Auth/src/utils"
@@ -19,7 +16,12 @@ func GetUser(c *fiber.Ctx) error {
 	var tokenHeader string
 	header := c.Get("Authorization")
 	if header != "" {
-		tokenHeader = strings.Split(c.Get("Authorization"), " ")[1]
+		split := strings.Split(c.Get("Authorization"), " ")
+		if len(split) < 2 {
+			tokenHeader = ""
+		} else {
+			tokenHeader = strings.Split(c.Get("Authorization"), " ")[1]
+		}
 	}
 	tokenCookie := c.Cookies("access_token")
 
@@ -37,25 +39,7 @@ func GetUser(c *fiber.Ctx) error {
 		tokenString = tokenCookie
 	}
 
-	token, err := jwt.ParseString(tokenString, jwt.WithVerify(jwa.RS256, *utils.PublicJWTKey))
-	if err != nil {
-		fmt.Println("Invalid token here:", err)
-		return c.Status(400).JSON(fiber.Map{
-			"error": true,
-			"code":  "INVALID_TOKEN",
-		})
-	}
-
-	userId := token.Subject()
-	if userId == "" {
-		return c.Status(400).JSON(fiber.Map{
-			"error": true,
-			"code":  "INVALID_TOKEN",
-		})
-	}
-
-	tokenId, _ := token.Get("tokenId")
-	err = databases.GetRedis().Get(context.Background(), userId+"_"+tokenId.(string)).Err()
+	token, err := utils.ValidateToken(tokenString)
 	if err != nil {
 		return c.Status(400).JSON(fiber.Map{
 			"error": true,
@@ -64,17 +48,21 @@ func GetUser(c *fiber.Ctx) error {
 	}
 
 	var user models.UserInfo
-	databases.GetMongoDatabase().Collection("users").FindOne(context.Background(), bson.M{"id": userId}).Decode(&user)
+	databases.GetMongoDatabase().Collection("users").FindOne(context.Background(), bson.M{"id": (*token).Subject()}).Decode(&user)
 
 	return c.Status(200).JSON(user)
-
 }
 
 func GetUserSessions(c *fiber.Ctx) error {
 	var tokenHeader string
 	header := c.Get("Authorization")
 	if header != "" {
-		tokenHeader = strings.Split(c.Get("Authorization"), " ")[1]
+		split := strings.Split(c.Get("Authorization"), " ")
+		if len(split) < 2 {
+			tokenHeader = ""
+		} else {
+			tokenHeader = strings.Split(c.Get("Authorization"), " ")[1]
+		}
 	}
 	tokenCookie := c.Cookies("access_token")
 
@@ -92,7 +80,7 @@ func GetUserSessions(c *fiber.Ctx) error {
 		tokenString = tokenCookie
 	}
 
-	token, err := jwt.ParseString(tokenString, jwt.WithVerify(jwa.RS256, *utils.PublicJWTKey))
+	token, err := utils.ValidateToken(tokenString)
 	if err != nil {
 		return c.Status(400).JSON(fiber.Map{
 			"error": true,
@@ -100,23 +88,7 @@ func GetUserSessions(c *fiber.Ctx) error {
 		})
 	}
 
-	userId := token.Subject()
-	if userId == "" {
-		return c.Status(400).JSON(fiber.Map{
-			"error": true,
-			"code":  "INVALID_TOKEN",
-		})
-	}
-	tokenId, _ := token.Get("tokenId")
-	err = databases.GetRedis().Get(context.Background(), userId+"_"+tokenId.(string)).Err()
-	if err != nil {
-		return c.Status(400).JSON(fiber.Map{
-			"error": true,
-			"code":  "INVALID_TOKEN",
-		})
-	}
-
-	keys := databases.GetRedis().Keys(context.Background(), userId+"*").Val()
+	keys := databases.GetRedis().Keys(context.Background(), (*token).Subject()+"*").Val()
 
 	var sessions []models.UserSession
 
@@ -156,7 +128,12 @@ func GetUserSession(c *fiber.Ctx) error {
 	var tokenHeader string
 	header := c.Get("Authorization")
 	if header != "" {
-		tokenHeader = strings.Split(c.Get("Authorization"), " ")[1]
+		split := strings.Split(c.Get("Authorization"), " ")
+		if len(split) < 2 {
+			tokenHeader = ""
+		} else {
+			tokenHeader = strings.Split(c.Get("Authorization"), " ")[1]
+		}
 	}
 	tokenCookie := c.Cookies("access_token")
 
@@ -174,7 +151,7 @@ func GetUserSession(c *fiber.Ctx) error {
 		tokenString = tokenCookie
 	}
 
-	token, err := jwt.ParseString(tokenString, jwt.WithVerify(jwa.RS256, *utils.PublicJWTKey))
+	token, err := utils.ValidateToken(tokenString)
 	if err != nil {
 		return c.Status(400).JSON(fiber.Map{
 			"error": true,
@@ -182,25 +159,7 @@ func GetUserSession(c *fiber.Ctx) error {
 		})
 	}
 
-	userId := token.Subject()
-	if userId == "" {
-		return c.Status(400).JSON(fiber.Map{
-			"error": true,
-			"code":  "INVALID_TOKEN",
-		})
-	}
-
-	currentTokenId, _ := token.Get("tokenId")
-	err = databases.GetRedis().Get(context.Background(), userId+"_"+currentTokenId.(string)).Err()
-	if err != nil {
-		return c.Status(400).JSON(fiber.Map{
-			"error": true,
-			"code":  "INVALID_TOKEN",
-		})
-	}
-
-
-	sessionJSON := databases.GetRedis().Get(context.Background(), userId+"_"+tokenId).Val()
+	sessionJSON := databases.GetRedis().Get(context.Background(), (*token).Subject()+"_"+tokenId).Val()
 	if sessionJSON == "" {
 		return c.Status(400).JSON(fiber.Map{
 			"error": true,
@@ -218,7 +177,6 @@ func GetUserSession(c *fiber.Ctx) error {
 	}
 
 	return c.Status(200).JSON(session)
-
 }
 
 func InvalidateSession(c *fiber.Ctx) error {
@@ -233,7 +191,12 @@ func InvalidateSession(c *fiber.Ctx) error {
 	var tokenHeader string
 	header := c.Get("Authorization")
 	if header != "" {
-		tokenHeader = strings.Split(c.Get("Authorization"), " ")[1]
+		split := strings.Split(c.Get("Authorization"), " ")
+		if len(split) < 2 {
+			tokenHeader = ""
+		} else {
+			tokenHeader = strings.Split(c.Get("Authorization"), " ")[1]
+		}
 	}
 	tokenCookie := c.Cookies("access_token")
 
@@ -251,7 +214,7 @@ func InvalidateSession(c *fiber.Ctx) error {
 		tokenString = tokenCookie
 	}
 
-	token, err := jwt.ParseString(tokenString, jwt.WithVerify(jwa.RS256, *utils.PublicJWTKey))
+	token, err := utils.ValidateToken(tokenString)
 	if err != nil {
 		return c.Status(400).JSON(fiber.Map{
 			"error": true,
@@ -259,24 +222,7 @@ func InvalidateSession(c *fiber.Ctx) error {
 		})
 	}
 
-	userId := token.Subject()
-	if userId == "" {
-		return c.Status(400).JSON(fiber.Map{
-			"error": true,
-			"code":  "INVALID_TOKEN",
-		})
-	}
-
-	currentTokenId, _ := token.Get("tokenId")
-	err = databases.GetRedis().Get(context.Background(), userId+"_"+currentTokenId.(string)).Err()
-	if err != nil {
-		return c.Status(400).JSON(fiber.Map{
-			"error": true,
-			"code":  "INVALID_TOKEN",
-		})
-	}
-
-	err = databases.GetRedis().Del(context.Background(), userId+"_"+tokenId).Err();
+	err = databases.GetRedis().Del(context.Background(), (*token).Subject()+"_"+tokenId).Err()
 	if err != nil {
 		return c.Status(404).JSON(fiber.Map{
 			"error": true,
@@ -294,8 +240,14 @@ func InvalidateAllSessions(c *fiber.Ctx) error {
 	var tokenHeader string
 	header := c.Get("Authorization")
 	if header != "" {
-		tokenHeader = strings.Split(c.Get("Authorization"), " ")[1]
+		split := strings.Split(c.Get("Authorization"), " ")
+		if len(split) < 2 {
+			tokenHeader = ""
+		} else {
+			tokenHeader = strings.Split(c.Get("Authorization"), " ")[1]
+		}
 	}
+
 	tokenCookie := c.Cookies("access_token")
 
 	if tokenHeader == "" && tokenCookie == "" {
@@ -312,7 +264,7 @@ func InvalidateAllSessions(c *fiber.Ctx) error {
 		tokenString = tokenCookie
 	}
 
-	token, err := jwt.ParseString(tokenString, jwt.WithVerify(jwa.RS256, *utils.PublicJWTKey))
+	token, err := utils.ValidateToken(tokenString)
 	if err != nil {
 		return c.Status(400).JSON(fiber.Map{
 			"error": true,
@@ -320,26 +272,14 @@ func InvalidateAllSessions(c *fiber.Ctx) error {
 		})
 	}
 
-	userId := token.Subject()
-	if userId == "" {
-		return c.Status(400).JSON(fiber.Map{
-			"error": true,
-			"code":  "INVALID_TOKEN",
-		})
-	}
+	keys := databases.GetRedis().Keys(context.Background(), (*token).Subject()+"*").Val()
 
-	currentTokenId, _ := token.Get("tokenId")
-	err = databases.GetRedis().Get(context.Background(), userId+"_"+currentTokenId.(string)).Err()
+	err = databases.GetRedis().Del(context.Background(), keys...).Err()
 	if err != nil {
-		return c.Status(400).JSON(fiber.Map{
+		return c.Status(500).JSON(fiber.Map{
 			"error": true,
-			"code":  "INVALID_TOKEN",
+			"code":  "INTERNAL_SERVER_ERROR",
 		})
-	}
-
-	keys := databases.GetRedis().Keys(context.Background(), userId+"*").Val();
-	for _, key := range keys {
-		databases.GetRedis().Del(context.Background(), key).Err();
 	}
 
 	return c.Status(200).JSON(fiber.Map{
