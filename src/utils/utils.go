@@ -109,7 +109,7 @@ func CreateSesssion(userId, tokenId, ipAddress, userAgent string, expires int) e
 		return err
 	}
 
-	return redis.Set(context.Background(), userId+"_"+tokenId, string(jsonSession), time.Second*time.Duration(expires)).Err()
+	return redis.Set(context.Background(), userId+"_"+tokenId, string(jsonSession), time.Duration(expires)).Err()
 
 }
 
