@@ -107,7 +107,7 @@ func CallbackGoogle(c *fiber.Ctx) error {
 		Value:    token,
 		Expires:  time.Now().Add(time.Hour * 3),
 		HTTPOnly: true,
-		Secure:   false,
+		Secure:   true,
 	})
 
 	c.Set("Authorization", "Bearer "+token)
