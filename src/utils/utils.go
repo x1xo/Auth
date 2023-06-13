@@ -17,6 +17,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/lestrrat-go/jwx/jwa"
 	"github.com/lestrrat-go/jwx/jwk"
+	"github.com/lestrrat-go/jwx/jws"
 	"github.com/lestrrat-go/jwx/jwt"
 	"github.com/x1xo/Auth/src/databases"
 	"github.com/x1xo/Auth/src/databases/models"
@@ -44,18 +45,14 @@ func RandomId(lenght int) (string, error) {
 }
 
 func GenerateJWKS() (*jwk.Set, error) {
-	if PublicKey == nil {
+	if PublicJWTKey == nil {
 		if err := LoadCertificates(); err != nil {
 			return nil, err
 		}
 	}
-	jwkKey, err := jwk.ParseKey([]byte(*PublicKey), jwk.WithPEM(true))
-	if err != nil {
-		return nil, err
-	}
 
 	jwkSet := jwk.NewSet()
-	jwkSet.Add(jwkKey)
+	jwkSet.Add(*PublicJWTKey)
 	return &jwkSet, nil
 }
 
@@ -84,7 +81,8 @@ func LoadCertificates() error {
 	if err != nil {
 		return err
 	}
-
+	jwk.AssignKeyID(jwkKey)
+	jwkKey.Set(jwk.AlgorithmKey, jwa.RS256)
 	PublicJWTKey = &jwkKey
 
 	return nil
@@ -141,16 +139,20 @@ func GenerateToken(userId string) (string, string, error) {
 	token := jwt.New()
 
 	token.Set("sub", userId)
-	token.Set("tokenId", uuid.New().String())
+	token.Set("jti", uuid.New().String())
 	token.Set("iat", time.Now().Unix())
 	token.Set("exp", time.Now().Add(time.Hour*3).Unix())
 
-	signedToken, err := jwt.Sign(token, jwa.RS256, privateKey)
+	headers := jws.NewHeaders()
+	headers.Set("kid", (*PublicJWTKey).KeyID())
+
+	signedToken, err := jwt.Sign(token, jwa.RS256, privateKey, jwt.WithHeaders(headers))
 	if err != nil {
 		log.Println("[Error] Couldn't sign a token: \n", err)
 		return "", "", err
 	}
-	tokenId, _ := token.Get("tokenId")
+
+	tokenId, _ := token.Get("jti")
 	return string(signedToken), tokenId.(string), nil
 }
 
@@ -165,7 +167,7 @@ func ValidateToken(tokenString string) (*jwt.Token, error) {
 		return nil, errors.New("invalid token")
 	}
 
-	tokenId, _ := token.Get("tokenId")
+	tokenId, _ := token.Get("jti")
 	err = databases.GetRedis().Get(context.Background(), userId+"_"+tokenId.(string)).Err()
 	if err != nil {
 		return nil, errors.New("invalid token")
