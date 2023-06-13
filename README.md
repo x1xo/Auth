@@ -42,6 +42,13 @@ To see all the tokens/sessions for a user, simply navigate to `/api/user/session
 
 If you need to validate whether a token has been revoked, visit `/api/user/sessions/<tokenid>`. This endpoint will respond with information about whether the token has been revoked, allowing you to maintain control over the validity of user sessions.
 
+To revoke/invalidate a token/session, send a `DELETE` method to `/api/user/sessions/<tokenid>`. This endpoint will invalidate
+the token with the assoiciated `tokenid` and will block future requests with that token. When invalidating your app can also
+store the `tokenid`, so it cuts the round trip for checking if the token with `tokenid` is valid.
+
+To revoke/invalidate all tokens/sessions, send a `DELETE` method to `/api/users/sessions/invalidate_all`. This endpoint will 
+invalidate all tokens/sessions assoiciated with the current user.
+
 **Note:** When accessing any `/api` routes, make sure to pass the `access_token` cookie in your request. This cookie is essential for authentication and authorization purposes.
 
 ## Error Handling ❗
