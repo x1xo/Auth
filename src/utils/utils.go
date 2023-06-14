@@ -157,7 +157,7 @@ func GenerateToken(userId string) (string, string, error) {
 }
 
 func ValidateToken(tokenString string) (*jwt.Token, error) {
-	token, err := jwt.ParseString(tokenString, jwt.WithVerify(jwa.RS256, *PublicJWTKey))
+	token, err := jwt.ParseString(tokenString, jwt.WithVerify(jwa.RS256, *PublicJWTKey), jwt.WithValidate(true));
 	if err != nil {
 		return nil, err
 	}
