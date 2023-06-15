@@ -216,9 +216,9 @@ func InvalidateSession(c *fiber.Ctx) error {
 
 	token, err := utils.ValidateToken(tokenString)
 	if err != nil {
-		return c.Status(400).JSON(fiber.Map{
+		return c.Status(401).JSON(fiber.Map{
 			"error": true,
-			"code":  "INVALID_TOKEN",
+			"code":  "UNAUTHORIZED",
 		})
 	}
 
@@ -266,9 +266,9 @@ func InvalidateAllSessions(c *fiber.Ctx) error {
 
 	token, err := utils.ValidateToken(tokenString)
 	if err != nil {
-		return c.Status(400).JSON(fiber.Map{
+		return c.Status(401).JSON(fiber.Map{
 			"error": true,
-			"code":  "INVALID_TOKEN",
+			"code":  "UNAUTHORIZED",
 		})
 	}
 
