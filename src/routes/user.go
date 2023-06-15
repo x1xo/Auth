@@ -222,8 +222,16 @@ func InvalidateSession(c *fiber.Ctx) error {
 		})
 	}
 
-	err = databases.GetRedis().Del(context.Background(), (*token).Subject()+"_"+tokenId).Err()
+	res, err := databases.GetRedis().Del(context.Background(), (*token).Subject()+"_"+tokenId).Result()
+
 	if err != nil {
+		return c.Status(404).JSON(fiber.Map{
+			"error": true,
+			"code":  "NOT_FOUND",
+		})
+	}
+
+	if res < 1 {
 		return c.Status(404).JSON(fiber.Map{
 			"error": true,
 			"code":  "NOT_FOUND",
