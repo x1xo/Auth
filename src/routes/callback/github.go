@@ -136,7 +136,7 @@ func CallbackGithub(c *fiber.Ctx) error {
 		Value:    token,
 		Expires:  time.Now().Add(time.Hour * 3),
 		HTTPOnly: true,
-		Secure:   true,
+		Secure:   os.Getenv("ENVIRONMENT") == "production",
 	})
 
 	c.Set("Authorization", "Bearer "+token)
